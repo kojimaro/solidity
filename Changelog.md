@@ -5,6 +5,7 @@ Language Features:
 
 
 Compiler Features:
+ * Standard-Json: Support "Yul" as input language.
  * SMTChecker: Support enums without typecast.
  * SMTChecker: Support one-dimensional arrays.
  * Yul Optimizer: Add rule to remove empty default switch cases
