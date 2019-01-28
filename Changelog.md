@@ -17,6 +17,7 @@ Compiler Features:
  * Optimizer: Combine multiple shifts with constant shift-by values into one.
  * Optimizer: Do not mask with 160-bits after ``CREATE`` and ``CREATE2`` as they are guaranteed to return an address or 0.
  * Optimizer: Support shifts in the constant optimiser for Constantinople.
+ * Optimizer: Take shortest representation for store-as-data option in the constant optimizer.
  * Yul Optimizer: Add rule to replace switch statements with const expr. with matching case body
 
 
