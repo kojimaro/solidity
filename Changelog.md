@@ -13,7 +13,7 @@ Compiler Features:
  * Standard JSON Interface: Allow retrieving metadata without triggering compilation.
  * Static Analyzer: Warn about expressions with custom types when they have no effect.
  * Optimizer: Add new rules with constants including ``LT``, ``GT``, ``AND`` and ``BYTE``.
- * Optimizer: Add rule for shifts with constants for Constantinople.
+ * Optimizer: Add rule for shifts with constants (0, >255) for Constantinople.
  * Optimizer: Combine multiple shifts with constant shift-by values into one.
  * Optimizer: Do not mask with 160-bits after ``CREATE`` and ``CREATE2`` as they are guaranteed to return an address or 0.
  * Optimizer: Support shifts in the constant optimiser for Constantinople.
