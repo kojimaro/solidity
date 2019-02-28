@@ -48,7 +48,11 @@ string TestFunctionCall::format(string const& _linePrefix, bool const _renderRes
 		if (!m_call.arguments.rawBytes().empty())
 		{
 			string output = formatRawParameters(m_call.arguments.parameters, _linePrefix);
-			_stream << colon << output;
+			_stream << colon;
+			if (_singleLine)
+				_stream << ws;
+			_stream << output;
+
 		}
 
 		/// Formats comments on the function parameters and the arrow taking
@@ -112,8 +116,6 @@ string TestFunctionCall::format(string const& _linePrefix, bool const _renderRes
 		formatOutput(true);
 	else
 		formatOutput(false);
-//	_stream << endl;
-
 	return _stream.str();
 }
 
@@ -181,10 +183,10 @@ string TestFunctionCall::formatRawParameters(dev::solidity::test::ParameterList 
 	for (auto const& param: _params)
 	{
 		if (param.format.newline)
-			resultStream << endl << _linePrefix << "//";
-		resultStream << " " << param.rawString;
+			resultStream << endl << _linePrefix << "// ";
+		resultStream << param.rawString;
 		if (&param != &_params.back())
-			resultStream << ",";
+			resultStream << ", ";
 	}
 	return resultStream.str();
 }
