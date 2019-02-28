@@ -117,10 +117,10 @@ struct ABIType
 		AlignRight,
 		AlignNone,
 	};
-
 	Type type = ABIType::None;
 	Align align = ABIType::AlignRight;
 	size_t size = 0;
+	bool alignDeclared = false;
 };
 
 /**

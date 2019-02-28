@@ -495,8 +495,6 @@ BOOST_AUTO_TEST_CASE(call_raw_arguments)
 
 BOOST_AUTO_TEST_CASE(call_builtin_left_decimal)
 {
-	cout << fmt::encode(bytes{true}, true) << endl;
-	cout << fmt::encode(bytes{true}, false) << endl;
 	char const* source = R"(
 		// f(): left(1), left(0x20) -> left(-2), left(true)
 	)";

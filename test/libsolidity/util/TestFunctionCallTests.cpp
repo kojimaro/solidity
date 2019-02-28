@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(format_bool_left_singleline)
 	FunctionCall call{"f(bool)", 0, arguments, expectations};
 	TestFunctionCall test{call};
 
-	BOOST_REQUIRE_EQUAL(test.format(), "// f(bool): left(false) -> false");
+	BOOST_REQUIRE_EQUAL(test.format(), "// f(bool): left(false) -> left(false)");
 }
 
 BOOST_AUTO_TEST_CASE(format_hex_number_right_singleline)
@@ -139,38 +139,42 @@ BOOST_AUTO_TEST_CASE(format_hex_number_right_singleline)
 	FunctionCall call{"f(bool)", 0, arguments, expectations};
 	TestFunctionCall test{call};
 
-	BOOST_REQUIRE_EQUAL(test.format(), "// f(bool): right(0x42) -> 0x42");
+	BOOST_REQUIRE_EQUAL(test.format(), "// f(bool): right(0x42) -> right(0x42)");
 }
 
 BOOST_AUTO_TEST_CASE(format_empty_byte_range)
 {
 	bytes expectedBytes;
-	ABIType abiType{ABIType::UnsignedDec, ABIType::AlignRight, 32};
+	ABIType abiType{ABIType::None, ABIType::AlignNone, 0};
 	Parameter param{expectedBytes, "1", abiType, FormatInfo{}};
 	FunctionCallExpectations expectations{vector<Parameter>{param}, false, string{}};
 	FunctionCallArgs arguments{vector<Parameter>{}, string{}};
 	FunctionCall call{"f()", 0, arguments, expectations};
 	TestFunctionCall test{call};
 
-	BOOST_REQUIRE_EQUAL(test.format(), "// f() -> ");
+	BOOST_REQUIRE_EQUAL(test.format(), "// f() -> 1");
 }
 
 BOOST_AUTO_TEST_CASE(format_parameter_encoding_too_short)
 {
 	bytes expectedBytes = toBigEndian(u256{1}) + toBigEndian(u256{1});
-	ABIType abiType{ABIType::UnsignedDec, ABIType::AlignRight, 32};
+	ABIType abiType{ABIType::UnsignedDec, ABIType::AlignRight, 20};
 	Parameter param{expectedBytes, "1", abiType, FormatInfo{}};
 	FunctionCallExpectations expectations{vector<Parameter>{param, param}, false, string{}};
 	FunctionCallArgs arguments{vector<Parameter>{param, param}, string{}};
 	FunctionCall call{"f(uint8, uint8)", 0, arguments, expectations};
 	TestFunctionCall test{call};
 
-	BOOST_REQUIRE_THROW(test.format(), runtime_error);
+	bytes resultBytes = toBigEndian(u256{1}) + toBigEndian(u256{2});
+	test.setRawBytes(resultBytes);
+	test.setFailure(false);
+
+	BOOST_REQUIRE_THROW(test.format("", true), runtime_error);
 }
 
 BOOST_AUTO_TEST_CASE(format_byte_range_too_short)
 {
-	bytes expectedBytes{0};
+	bytes expectedBytes = toBigEndian(u256{1});
 	ABIType abiType{ABIType::UnsignedDec, ABIType::AlignRight, 32};
 	Parameter param{expectedBytes, "1", abiType, FormatInfo{}};
 	FunctionCallExpectations expectations{vector<Parameter>{param, param}, false, string{}};
@@ -178,7 +182,11 @@ BOOST_AUTO_TEST_CASE(format_byte_range_too_short)
 	FunctionCall call{"f(uint8, uint8)", 0, arguments, expectations};
 	TestFunctionCall test{call};
 
-	BOOST_REQUIRE_THROW(test.format(), runtime_error);
+	bytes resultBytes{0};
+	test.setRawBytes(resultBytes);
+	test.setFailure(false);
+
+	BOOST_REQUIRE_THROW(test.format("", true), runtime_error);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

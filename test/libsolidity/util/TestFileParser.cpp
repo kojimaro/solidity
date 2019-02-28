@@ -199,41 +199,52 @@ Parameter TestFileParser::parseParameter()
 
 tuple<bytes, ABIType, string> TestFileParser::parseABITypeLiteral()
 {
-	u256 number{0};
-	ABIType abiType{ABIType::None, ABIType::AlignNone, 0};
-	string rawString;
-	bytes result = toBigEndian(number);
+	enum class DeclaredAlignment {
+		Left,
+		Right,
+		None,
+	};
 
 	auto alignLeft = [](bytes _bytes) -> bytes
 	{
 		return _bytes + bytes(32 - _bytes.size(), 0);
 	};
+
 	auto alignRight = [](bytes _bytes) -> bytes
 	{
 		return bytes(32 - _bytes.size(), 0) + _bytes;
 	};
 
-	enum class Modifier {
-		Left,
-		Right,
-		None,
+	auto applyAlign = [&](DeclaredAlignment _modifier, bytes _bytes) -> pair<bytes, ABIType::Align>
+	{
+		if (_modifier == DeclaredAlignment::Right)
+			return make_pair(alignRight(_bytes), ABIType::AlignRight);
+		else if (_modifier == DeclaredAlignment::Left)
+			return make_pair(alignLeft(_bytes), ABIType::AlignLeft);
+		else
+			return make_pair(alignRight(_bytes), ABIType::AlignRight);
 	};
-	Modifier modifier = Modifier::None;
+
+	string rawString;
+	ABIType abiType{ABIType::None, ABIType::AlignNone, 0};
+	bytes result = toBigEndian(u256{0});
 	bool isSigned = false;
+
+	DeclaredAlignment alignment = DeclaredAlignment::None;
 
 	if (accept(Token::Left, true))
 	{
 		rawString += formatToken(Token::Left);
 		expect(Token::LParen);
 		rawString += formatToken(Token::LParen);
-		modifier = Modifier::Left;
+		alignment = DeclaredAlignment::Left;
 	}
 	if (accept(Token::Right, true))
 	{
 		rawString += formatToken(Token::Right);
 		expect(Token::LParen);
 		rawString += formatToken(Token::LParen);
-		modifier = Modifier::Right;
+		alignment = DeclaredAlignment::Right;
 	}
 
 	try
@@ -251,15 +262,13 @@ tuple<bytes, ABIType, string> TestFileParser::parseABITypeLiteral()
 
 			string parsed = parseBoolean();
 			rawString += parsed;
-			result = convertBoolean(parsed);
 
-			if (modifier == Modifier::None || modifier == Modifier::Right)
-				result = alignRight(result);
-			else if (modifier == Modifier::Left)
-			{
-				result = alignLeft(result);
-				abiType.align = ABIType::AlignLeft;
-			}
+			if (alignment != DeclaredAlignment::None)
+				abiType.alignDeclared = true;
+
+			auto alignedBytes = applyAlign(alignment, convertBoolean(parsed));
+			result = alignedBytes.first;
+			abiType.align = alignedBytes.second;
 		}
 		else if (accept(Token::HexNumber))
 		{
@@ -268,15 +277,13 @@ tuple<bytes, ABIType, string> TestFileParser::parseABITypeLiteral()
 			abiType = ABIType{ABIType::Hex, ABIType::AlignRight, 32};
 			string parsed = parseHexNumber();
 			rawString += parsed;
-			result = convertHexNumber(parsed);
 
-			if (modifier == Modifier::None || modifier == Modifier::Right)
-				result = alignRight(result);
-			else if (modifier == Modifier::Left)
-			{
-				result = alignLeft(result);
-				abiType.align = ABIType::AlignLeft;
-			}
+			if (alignment != DeclaredAlignment::None)
+				abiType.alignDeclared = true;
+
+			auto alignedBytes = applyAlign(alignment, convertHexNumber(parsed));
+			result = alignedBytes.first;
+			abiType.align = alignedBytes.second;
 		}
 		else if (accept(Token::Number))
 		{
@@ -286,15 +293,13 @@ tuple<bytes, ABIType, string> TestFileParser::parseABITypeLiteral()
 			rawString += parsed;
 			if (isSigned)
 				parsed = "-" + parsed;
-			result = convertNumber(parsed);
 
-			if (modifier == Modifier::None || modifier == Modifier::Right)
-				result = alignRight(result);
-			else if (modifier == Modifier::Left)
-			{
-				result = alignLeft(result);
-				abiType.align = ABIType::AlignLeft;
-			}
+			if (alignment != DeclaredAlignment::None)
+				abiType.alignDeclared = true;
+
+			auto alignedBytes = applyAlign(alignment, convertNumber(parsed));
+			result = alignedBytes.first;
+			abiType.align = alignedBytes.second;
 		}
 		else if (accept(Token::Failure, true))
 		{
@@ -303,8 +308,11 @@ tuple<bytes, ABIType, string> TestFileParser::parseABITypeLiteral()
 			abiType = ABIType{ABIType::Failure, ABIType::AlignRight, 0};
 			result = bytes{};
 		}
-		if (modifier != Modifier::None)
+		if (alignment != DeclaredAlignment::None)
+		{
 			expect(Token::RParen);
+			rawString += formatToken(Token::RParen);
+		}
 		return make_tuple(result, abiType, rawString);
 	}
 	catch (std::exception const&)

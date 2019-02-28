@@ -76,13 +76,19 @@ string TestFunctionCall::format(string const& _linePrefix, bool const _renderRes
 		{
 			bytes output = m_call.expectations.rawBytes();
 			bool const isFailure = m_call.expectations.failure;
-			result = isFailure ? failure : formatBytesParameters(output, m_call.expectations.result);
+			result = isFailure
+				? failure
+				: formatRawParameters(m_call.expectations.result);
 		}
 		else
 		{
 			bytes output = m_rawBytes;
 			bool const isFailure = m_failure;
-			result = isFailure ? failure : formatBytesParameters(output, m_call.expectations.result);
+			result = isFailure
+				? failure
+				: matchesExpectation()
+					? formatRawParameters(m_call.expectations.result)
+					: formatBytesParameters(output, m_call.expectations.result);
 		}
 		AnsiColorized(_stream, highlight, {dev::formatting::RED_BACKGROUND}) << result;
 
@@ -144,18 +150,16 @@ string TestFunctionCall::formatBytesParameters(bytes const& _bytes, dev::solidit
 			break;
 		case ABIType::Boolean:
 		{
-			cout << byteRange << endl;
 			u256 result = fromBigEndian<u256>(byteRange);
 			if (result == 0)
 				resultStream << "false";
-			else
+			else if (result == 1)
 				resultStream << "true";
+			else
+				resultStream << result;
 			break;
 		}
 		case ABIType::Hex:
-			byteRange.erase(
-				std::remove(byteRange.begin(), byteRange.end(), 0), byteRange.end()
-			);
 			resultStream << toHex(byteRange, HexPrefix::Add);
 			break;
 		case ABIType::Failure:
