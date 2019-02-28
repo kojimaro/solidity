@@ -200,12 +200,41 @@ Parameter TestFileParser::parseParameter()
 tuple<bytes, ABIType, string> TestFileParser::parseABITypeLiteral()
 {
 	u256 number{0};
-	ABIType abiType{ABIType::None, ABIType::AlignRight, 0};
+	ABIType abiType{ABIType::None, ABIType::AlignNone, 0};
 	string rawString;
 	bytes result = toBigEndian(number);
 
+	auto alignLeft = [](bytes _bytes) -> bytes
+	{
+		return _bytes + bytes(32 - _bytes.size(), 0);
+	};
+	auto alignRight = [](bytes _bytes) -> bytes
+	{
+		return bytes(32 - _bytes.size(), 0) + _bytes;
+	};
 
+	enum class Modifier {
+		Left,
+		Right,
+		None,
+	};
+	Modifier modifier = Modifier::None;
 	bool isSigned = false;
+
+	if (accept(Token::Left, true))
+	{
+		rawString += formatToken(Token::Left);
+		expect(Token::LParen);
+		rawString += formatToken(Token::LParen);
+		modifier = Modifier::Left;
+	}
+	if (accept(Token::Right, true))
+	{
+		rawString += formatToken(Token::Right);
+		expect(Token::LParen);
+		rawString += formatToken(Token::LParen);
+		modifier = Modifier::Right;
+	}
 
 	try
 	{
@@ -219,9 +248,18 @@ tuple<bytes, ABIType, string> TestFileParser::parseABITypeLiteral()
 			if (isSigned)
 				throw Error(Error::Type::ParserError, "Invalid boolean literal.");
 			abiType = ABIType{ABIType::Boolean, ABIType::AlignRight, 32};
+
 			string parsed = parseBoolean();
 			rawString += parsed;
 			result = convertBoolean(parsed);
+
+			if (modifier == Modifier::None || modifier == Modifier::Right)
+				result = alignRight(result);
+			else if (modifier == Modifier::Left)
+			{
+				result = alignLeft(result);
+				abiType.align = ABIType::AlignLeft;
+			}
 		}
 		else if (accept(Token::HexNumber))
 		{
@@ -231,6 +269,14 @@ tuple<bytes, ABIType, string> TestFileParser::parseABITypeLiteral()
 			string parsed = parseHexNumber();
 			rawString += parsed;
 			result = convertHexNumber(parsed);
+
+			if (modifier == Modifier::None || modifier == Modifier::Right)
+				result = alignRight(result);
+			else if (modifier == Modifier::Left)
+			{
+				result = alignLeft(result);
+				abiType.align = ABIType::AlignLeft;
+			}
 		}
 		else if (accept(Token::Number))
 		{
@@ -238,7 +284,17 @@ tuple<bytes, ABIType, string> TestFileParser::parseABITypeLiteral()
 			abiType = ABIType{type, ABIType::AlignRight, 32};
 			string parsed = parseDecimalNumber();
 			rawString += parsed;
-			result = convertNumber(parsed, isSigned);
+			if (isSigned)
+				parsed = "-" + parsed;
+			result = convertNumber(parsed);
+
+			if (modifier == Modifier::None || modifier == Modifier::Right)
+				result = alignRight(result);
+			else if (modifier == Modifier::Left)
+			{
+				result = alignLeft(result);
+				abiType.align = ABIType::AlignLeft;
+			}
 		}
 		else if (accept(Token::Failure, true))
 		{
@@ -247,6 +303,8 @@ tuple<bytes, ABIType, string> TestFileParser::parseABITypeLiteral()
 			abiType = ABIType{ABIType::Failure, ABIType::AlignRight, 0};
 			result = bytes{};
 		}
+		if (modifier != Modifier::None)
+			expect(Token::RParen);
 		return make_tuple(result, abiType, rawString);
 	}
 	catch (std::exception const&)
@@ -311,23 +369,19 @@ string TestFileParser::parseHexNumber()
 
 bytes TestFileParser::convertBoolean(string const& _literal)
 {
-
 	if (_literal == "true")
-		return toBigEndian(u256{true});
+		return bytes{true};
 	else if (_literal == "false")
-		return toBigEndian(u256{false});
+		return bytes{false};
 	else
 		throw Error(Error::Type::ParserError, "Boolean literal invalid.");
 }
 
-bytes TestFileParser::convertNumber(string const& _literal, bool _signed)
+bytes TestFileParser::convertNumber(string const& _literal)
 {
 	try
 	{
-		u256 result{_literal};
-		if (_signed)
-			result *= -1;
-		return toBigEndian(result);
+		return toCompactBigEndian(u256{_literal});
 	}
 	catch (std::exception const&)
 	{
@@ -345,8 +399,7 @@ bytes TestFileParser::convertHexNumber(string const& _literal)
 		}
 		else
 		{
-			bytes result = fromHex(_literal);
-			return result + bytes(32 - result.size(), 0);
+			return fromHex(_literal);
 		}
 	}
 	catch (std::exception const&)
@@ -372,6 +425,8 @@ void TestFileParser::Scanner::scanNextToken()
 		if (_literal == "true") return TokenDesc{Token::Boolean, _literal};
 		if (_literal == "false") return TokenDesc{Token::Boolean, _literal};
 		if (_literal == "ether") return TokenDesc{Token::Ether, _literal};
+		if (_literal == "left") return TokenDesc{Token::Left, _literal};
+		if (_literal == "right") return TokenDesc{Token::Right, _literal};
 		if (_literal == "FAILURE") return TokenDesc{Token::Failure, _literal};
 		return TokenDesc{Token::Identifier, _literal};
 	};

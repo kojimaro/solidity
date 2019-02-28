@@ -89,20 +89,6 @@ BOOST_AUTO_TEST_CASE(format_hex_singleline)
 	BOOST_REQUIRE_EQUAL(test.format(), "// f(bytes32): 0x31 -> 0x31");
 }
 
-BOOST_AUTO_TEST_CASE(format_hex_left_align)
-{
-	bytes result = fromHex("0x31");
-	bytes expectedBytes = result + bytes(32 - result.size(), 0);
-	ABIType abiType{ABIType::Hex, ABIType::AlignLeft, 32};
-	Parameter param{expectedBytes, "0x31", abiType, FormatInfo{}};
-	FunctionCallExpectations expectations{vector<Parameter>{param}, false, string{}};
-	FunctionCallArgs arguments{vector<Parameter>{param}, string{}};
-	FunctionCall call{"f(bytes32)", 0, arguments, expectations};
-	TestFunctionCall test{call};
-
-	BOOST_REQUIRE_THROW(test.format(), runtime_error);
-}
-
 BOOST_AUTO_TEST_CASE(format_bool_true_singleline)
 {
 	bytes expectedBytes = toBigEndian(u256{true});
@@ -129,17 +115,31 @@ BOOST_AUTO_TEST_CASE(format_bool_false_singleline)
 	BOOST_REQUIRE_EQUAL(test.format(), "// f(bool): false -> false");
 }
 
-BOOST_AUTO_TEST_CASE(format_bool_left_align_singleline)
+BOOST_AUTO_TEST_CASE(format_bool_left_singleline)
 {
-	bytes expectedBytes = toBigEndian(u256{true});
+	bytes expectedBytes = toBigEndian(u256{false});
 	ABIType abiType{ABIType::Boolean, ABIType::AlignLeft, 32};
-	Parameter param{expectedBytes, "true", abiType, FormatInfo{}};
+	Parameter param{expectedBytes, "left(false)", abiType, FormatInfo{}};
 	FunctionCallExpectations expectations{vector<Parameter>{param}, false, string{}};
 	FunctionCallArgs arguments{vector<Parameter>{param}, string{}};
 	FunctionCall call{"f(bool)", 0, arguments, expectations};
 	TestFunctionCall test{call};
 
-	BOOST_REQUIRE_THROW(test.format(), runtime_error);
+	BOOST_REQUIRE_EQUAL(test.format(), "// f(bool): left(false) -> false");
+}
+
+BOOST_AUTO_TEST_CASE(format_hex_number_right_singleline)
+{
+	bytes result = fromHex("0x42");
+	bytes expectedBytes = result + bytes(32 - result.size(), 0);
+	ABIType abiType{ABIType::Hex, ABIType::AlignRight, 32};
+	Parameter param{expectedBytes, "right(0x42)", abiType, FormatInfo{}};
+	FunctionCallExpectations expectations{vector<Parameter>{param}, false, string{}};
+	FunctionCallArgs arguments{vector<Parameter>{param}, string{}};
+	FunctionCall call{"f(bool)", 0, arguments, expectations};
+	TestFunctionCall test{call};
+
+	BOOST_REQUIRE_EQUAL(test.format(), "// f(bool): right(0x42) -> 0x42");
 }
 
 BOOST_AUTO_TEST_CASE(format_empty_byte_range)

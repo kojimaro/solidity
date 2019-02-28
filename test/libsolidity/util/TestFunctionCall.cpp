@@ -131,14 +131,12 @@ string TestFunctionCall::formatBytesParameters(bytes const& _bytes, dev::solidit
 			// be signed. If an unsigned was detected in the expectations,
 			// but the actual result returned a signed, it would be formatted
 			// incorrectly.
-			soltestAssert(param.abiType.align == ABIType::AlignRight, "Unsigned decimals must be right-aligned.");
 			if (*byteRange.begin() & 0x80)
 				resultStream << u2s(fromBigEndian<u256>(byteRange));
 			else
 				resultStream << fromBigEndian<u256>(byteRange);
 			break;
 		case ABIType::SignedDec:
-			soltestAssert(param.abiType.align == ABIType::AlignRight, "Signed decimals must be right-aligned.");
 			if (*byteRange.begin() & 0x80)
 				resultStream << u2s(fromBigEndian<u256>(byteRange));
 			else
@@ -146,7 +144,7 @@ string TestFunctionCall::formatBytesParameters(bytes const& _bytes, dev::solidit
 			break;
 		case ABIType::Boolean:
 		{
-			soltestAssert(param.abiType.align == ABIType::AlignRight, "Booleans must be right-aligned.");
+			cout << byteRange << endl;
 			u256 result = fromBigEndian<u256>(byteRange);
 			if (result == 0)
 				resultStream << "false";
@@ -155,7 +153,6 @@ string TestFunctionCall::formatBytesParameters(bytes const& _bytes, dev::solidit
 			break;
 		}
 		case ABIType::Hex:
-			soltestAssert(param.abiType.align == ABIType::AlignRight, "Hex numbers must be right-aligned.");
 			byteRange.erase(
 				std::remove(byteRange.begin(), byteRange.end(), 0), byteRange.end()
 			);

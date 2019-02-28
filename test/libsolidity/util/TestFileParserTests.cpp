@@ -336,8 +336,8 @@ BOOST_AUTO_TEST_CASE(call_arguments_left_aligned)
 		"f(bytes32,bytes32)",
 		false,
 		fmt::encodeArgs(
-			u256("0x6161000000000000000000000000000000000000000000000000000000000000"),
-			u256("0x420000EF00000000000000000000000000000000000000000000000000000000")
+			fromHex("0x6161"),
+			fromHex("0x420000EF")
 		),
 		fmt::encodeArgs(1)
 	);
@@ -347,8 +347,8 @@ BOOST_AUTO_TEST_CASE(call_arguments_left_aligned)
 		"g(bytes32,bytes32)",
 		false,
 		fmt::encodeArgs(
-			u256("0x0616000000000000000000000000000000000000000000000000000000000000"),
-			u256("0x0042EF0000000000000000000000000000000000000000000000000000000000")
+			fromHex("0x0616"),
+			fromHex("0x0042EF00")
 		),
 		fmt::encodeArgs(1)
 	);
@@ -490,6 +490,48 @@ BOOST_AUTO_TEST_CASE(call_raw_arguments)
 		"",
 		"",
 		{"1", "-2", "-3"}
+	);
+}
+
+BOOST_AUTO_TEST_CASE(call_builtin_left_decimal)
+{
+	cout << fmt::encode(bytes{true}, true) << endl;
+	cout << fmt::encode(bytes{true}, false) << endl;
+	char const* source = R"(
+		// f(): left(1), left(0x20) -> left(-2), left(true)
+	)";
+	auto const calls = parse(source);
+	BOOST_REQUIRE_EQUAL(calls.size(), 1);
+	testFunctionCall(
+		calls.at(0),
+		Mode::SingleLine,
+		"f()",
+		false,
+		fmt::encodeArgs(
+			fmt::encode(toCompactBigEndian(u256{1}), false),
+			fmt::encode(fromHex("0x20"), false)
+		),
+		fmt::encodeArgs(
+			fmt::encode(toCompactBigEndian(u256{-2}), false),
+			fmt::encode(bytes{true}, false)
+		)
+	);
+}
+
+BOOST_AUTO_TEST_CASE(call_builtin_right_decimal)
+{
+	char const* source = R"(
+		// f(): right(1), right(0x20) -> right(-2), right(true)
+	)";
+	auto const calls = parse(source);
+	BOOST_REQUIRE_EQUAL(calls.size(), 1);
+	testFunctionCall(
+		calls.at(0),
+		Mode::SingleLine,
+		"f()",
+		false,
+		fmt::encodeArgs(1, fromHex("0x20")),
+		fmt::encodeArgs(-2, true)
 	);
 }
 

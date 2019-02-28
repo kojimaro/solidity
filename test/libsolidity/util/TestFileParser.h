@@ -62,6 +62,8 @@ namespace test
 	K(Ether, "ether", 0)           \
 	K(Boolean, "boolean", 0)       \
 	/* special keywords */         \
+	K(Left, "left", 0)             \
+	K(Right, "right", 0)           \
 	K(Failure, "FAILURE", 0)       \
 
 namespace soltest
@@ -112,7 +114,8 @@ struct ABIType
 	enum Align
 	{
 		AlignLeft,
-		AlignRight
+		AlignRight,
+		AlignNone,
 	};
 
 	Type type = ABIType::None;
@@ -370,15 +373,15 @@ private:
 	/// Parses the current hex number literal.
 	std::string parseHexNumber();
 
-	/// Tries to convert \param _literal to right-aligned, padded `bytes`
+	/// Tries to convert \param _literal to an unpadded `bytes`
 	/// representation of the boolean number literal. Throws if conversion fails.
 	bytes convertBoolean(std::string const& _literal);
 
-	/// Tries to convert \param _literal to right-aligned, padded `bytes`
+	/// Tries to convert \param _literal to an unpadded `bytes`
 	/// representation of the decimal number literal. Throws if conversion fails.
-	bytes convertNumber(std::string const& _literal, bool _signed = false);
+	bytes convertNumber(std::string const& _literal);
 
-	/// Tries to convert \param _literal to right-aligned, padded `bytes`
+	/// Tries to convert \param _literal to an unpadded `bytes`
 	/// representation of the hex literal. Throws if conversion fails.
 	bytes convertHexNumber(std::string const& _literal);
 
