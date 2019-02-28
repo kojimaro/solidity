@@ -155,7 +155,7 @@ string TestFunctionCall::formatBytesParameters(bytes const& _bytes, dev::solidit
 			break;
 		}
 		case ABIType::Hex:
-			soltestAssert(param.abiType.align == ABIType::AlignLeft, "Hex numbers must be left-aligned.");
+			soltestAssert(param.abiType.align == ABIType::AlignRight, "Hex numbers must be right-aligned.");
 			byteRange.erase(
 				std::remove(byteRange.begin(), byteRange.end(), 0), byteRange.end()
 			);

@@ -137,9 +137,16 @@ string TestFileParser::parseFunctionSignature()
 
 u256 TestFileParser::parseFunctionCallValue()
 {
-	u256 value = convertNumber(parseDecimalNumber());
-	expect(Token::Ether);
-	return value;
+	try
+	{
+		u256 value{parseDecimalNumber()};
+		expect(Token::Ether);
+		return value;
+	}
+	catch (std::exception const&)
+	{
+		throw Error(Error::Type::ParserError, "Ether value encoding invalid.");
+	}
 }
 
 FunctionCallArgs TestFileParser::parseFunctionCallArguments()
@@ -192,51 +199,55 @@ Parameter TestFileParser::parseParameter()
 
 tuple<bytes, ABIType, string> TestFileParser::parseABITypeLiteral()
 {
+	u256 number{0};
+	ABIType abiType{ABIType::None, ABIType::AlignRight, 0};
+	string rawString;
+	bytes result = toBigEndian(number);
+
+
+	bool isSigned = false;
+
 	try
 	{
-		u256 number{0};
-		ABIType abiType{ABIType::None, ABIType::AlignRight, 0};
-		string rawString;
-
-		if (accept(Token::Sub))
+		if (accept(Token::Sub, true))
 		{
-			abiType = ABIType{ABIType::SignedDec, ABIType::AlignRight, 32};
-			expect(Token::Sub);
 			rawString += formatToken(Token::Sub);
+			isSigned = true;
+		}
+		if (accept(Token::Boolean))
+		{
+			if (isSigned)
+				throw Error(Error::Type::ParserError, "Invalid boolean literal.");
+			abiType = ABIType{ABIType::Boolean, ABIType::AlignRight, 32};
+			string parsed = parseBoolean();
+			rawString += parsed;
+			result = convertBoolean(parsed);
+		}
+		else if (accept(Token::HexNumber))
+		{
+			if (isSigned)
+				throw Error(Error::Type::ParserError, "Invalid hex number literal.");
+			abiType = ABIType{ABIType::Hex, ABIType::AlignRight, 32};
+			string parsed = parseHexNumber();
+			rawString += parsed;
+			result = convertHexNumber(parsed);
+		}
+		else if (accept(Token::Number))
+		{
+			auto type = isSigned ? ABIType::SignedDec : ABIType::UnsignedDec;
+			abiType = ABIType{type, ABIType::AlignRight, 32};
 			string parsed = parseDecimalNumber();
 			rawString += parsed;
-			number = convertNumber(parsed) * -1;
+			result = convertNumber(parsed, isSigned);
 		}
-		else
+		else if (accept(Token::Failure, true))
 		{
-			if (accept(Token::Boolean))
-			{
-				abiType = ABIType{ABIType::Boolean, ABIType::AlignRight, 32};
-				string parsed = parseBoolean();
-				rawString += parsed;
-				return make_tuple(toBigEndian(u256{convertBoolean(parsed)}), abiType, rawString);
-			}
-			else if (accept(Token::HexNumber))
-			{
-				abiType = ABIType{ABIType::Hex, ABIType::AlignLeft, 32};
-				string parsed = parseHexNumber();
-				rawString += parsed;
-				return make_tuple(convertHexNumber(parsed), abiType, rawString);
-			}
-			else if (accept(Token::Number))
-			{
-				abiType = ABIType{ABIType::UnsignedDec, ABIType::AlignRight, 32};
-				string parsed = parseDecimalNumber();
-				rawString += parsed;
-				number = convertNumber(parsed);
-			}
-			else if (accept(Token::Failure, true))
-			{
-				abiType = ABIType{ABIType::Failure, ABIType::AlignRight, 0};
-				return make_tuple(bytes{}, abiType, rawString);
-			}
+			if (isSigned)
+				throw Error(Error::Type::ParserError, "Invalid failure literal.");
+			abiType = ABIType{ABIType::Failure, ABIType::AlignRight, 0};
+			result = bytes{};
 		}
-		return make_tuple(toBigEndian(number), abiType, rawString);
+		return make_tuple(result, abiType, rawString);
 	}
 	catch (std::exception const&)
 	{
@@ -298,21 +309,25 @@ string TestFileParser::parseHexNumber()
 	return literal;
 }
 
-bool TestFileParser::convertBoolean(string const& _literal)
+bytes TestFileParser::convertBoolean(string const& _literal)
 {
+
 	if (_literal == "true")
-		return true;
+		return toBigEndian(u256{true});
 	else if (_literal == "false")
-		return false;
+		return toBigEndian(u256{false});
 	else
 		throw Error(Error::Type::ParserError, "Boolean literal invalid.");
 }
 
-u256 TestFileParser::convertNumber(string const& _literal)
+bytes TestFileParser::convertNumber(string const& _literal, bool _signed)
 {
 	try
 	{
-		return u256{_literal};
+		u256 result{_literal};
+		if (_signed)
+			result *= -1;
+		return toBigEndian(result);
 	}
 	catch (std::exception const&)
 	{

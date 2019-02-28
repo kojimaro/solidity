@@ -370,16 +370,15 @@ private:
 	/// Parses the current hex number literal.
 	std::string parseHexNumber();
 
-	/// Coverts "true" to `true`, "false" to `false` and throws
-	/// otherwise.
-	bool convertBoolean(std::string const& _literal);
+	/// Tries to convert \param _literal to right-aligned, padded `bytes`
+	/// representation of the boolean number literal. Throws if conversion fails.
+	bytes convertBoolean(std::string const& _literal);
 
-	/// Tries to convert \param _literal to right-aligned, padded `u256`
-	/// representation of the decimal number literal.
-	/// Throws if conversion fails.
-	u256 convertNumber(std::string const& _literal);
+	/// Tries to convert \param _literal to right-aligned, padded `bytes`
+	/// representation of the decimal number literal. Throws if conversion fails.
+	bytes convertNumber(std::string const& _literal, bool _signed = false);
 
-	/// Tries to convert \param _literal to left-aligned, padded `bytes`
+	/// Tries to convert \param _literal to right-aligned, padded `bytes`
 	/// representation of the hex literal. Throws if conversion fails.
 	bytes convertHexNumber(std::string const& _literal);
 
