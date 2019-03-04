@@ -643,6 +643,9 @@ Json::Value StandardCompiler::compileInternal(Json::Value const& _input)
 
 	m_compilerStack.setRequestedContractNames(requestedContractNames(outputSelection));
 
+	if (isArtifactRequested(outputSelection, "ir"))
+		m_compilerStack.enableIRGeneration();
+
 	bool const binariesRequested = isBinaryRequested(outputSelection);
 
 	try
