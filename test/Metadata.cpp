@@ -21,6 +21,8 @@
 
 #include <string>
 #include <iostream>
+#include <libdevcore/Assertions.h>
+#include <libdevcore/CommonData.h>
 #include <libdevcore/JSON.h>
 #include <test/Metadata.h>
 
@@ -57,6 +59,99 @@ bytes bytecodeSansMetadata(bytes const& _bytecode)
 string bytecodeSansMetadata(string const& _bytecode)
 {
 	return toHex(bytecodeSansMetadata(fromHex(_bytecode, WhenError::Throw)));
+}
+
+DEV_SIMPLE_EXCEPTION(CBORException);
+
+class TinyCBORParser
+{
+public:
+	explicit TinyCBORParser(bytes const& _metadata): m_pos(0), m_metadata(_metadata) {}
+	unsigned mapItemCount()
+	{
+		assertThrow(nextType() == 5, CBORException, "Fixed-length map expected.");
+		return readLength();
+	}
+	string readKey()
+	{
+		return readString();
+	}
+	string readValue()
+	{
+		switch(nextType())
+		{
+			case 2:
+				return toHex(readBytes(readLength()));
+			case 3:
+				return readString();
+			case 7:
+			{
+				unsigned value = nextImmediate();
+				m_pos++;
+				if (value == 20)
+					return "false";
+				else if (value == 21)
+					return "true";
+				else
+					assertThrow(false, CBORException, "Unsupported simple value (not a boolean).");
+			}
+			default:
+				assertThrow(false, CBORException, "Unsupported value type.");
+		}
+	}
+private:
+	unsigned nextType() const { return (m_metadata[m_pos] >> 5) & 0x7; }
+	unsigned nextImmediate() const { return m_metadata[m_pos] & 0x1f; }
+	unsigned readLength()
+	{
+		unsigned length = m_metadata[m_pos++] & 0x1f;
+		if (length < 24)
+			return length;
+		if (length == 24)
+			return m_metadata[m_pos++];
+		// Unsupported length kind. (Only by this parser.)
+		assertThrow(false, CBORException, string("Unsupported length ") + to_string(length));
+	}
+	bytes readBytes(unsigned length)
+	{
+		bytes ret{m_metadata.begin() + m_pos, m_metadata.begin() + m_pos + length};
+		m_pos += length;
+		return ret;
+	}
+	string readString()
+	{
+		// Expect a text string.
+		assertThrow(nextType() == 3, CBORException, "String expected.");
+		bytes tmp{readBytes(readLength())};
+		return string{tmp.begin(), tmp.end()};
+	}
+	unsigned m_pos;
+	bytes const& m_metadata;
+};
+
+boost::optional<map<string, string>> parseCBORMetadata(bytes const& _metadata)
+{
+	// The minimum would be one byte for map and one byte each for a key and value.
+	if (_metadata.size() < 3)
+		return {};
+
+	try
+	{
+		TinyCBORParser parser(_metadata);
+		map<string, string> ret;
+		unsigned count = parser.mapItemCount();
+		for (unsigned i = 0; i < count; i++)
+		{
+			string key = parser.readKey();
+			string value = parser.readValue();
+			ret[move(key)] = move(value);
+		}
+		return ret;
+	}
+	catch (CBORException const&)
+	{
+		return {};
+	}
 }
 
 bool isValidMetadata(string const& _metadata)
