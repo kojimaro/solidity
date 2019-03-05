@@ -1,3 +1,9 @@
+### 0.5.6 (unreleased)
+
+Bugfixes:
+ * Json description of library ABIs no longer contain functions with internal
+   types like storage structs.
+
 ### 0.5.5 (2019-03-05)
 
 Language Features:
