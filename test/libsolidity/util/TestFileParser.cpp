@@ -248,19 +248,26 @@ string TestFileParser::parseIdentifierOrTuple()
 {
 	string identOrTuple;
 
+	auto parseArray = [&]() -> string
+	{
+		string array;
+		while (accept(Token::LBrack))
+		{
+			array += formatToken(Token::LBrack);
+			expect(Token::LBrack);
+			if (accept(Token::Number))
+				array += parseDecimalNumber();
+			array += formatToken(Token::RBrack);
+			expect(Token::RBrack);
+		}
+		return array;
+	};
+
 	if (accept(Token::Identifier))
 	{
 		identOrTuple = m_scanner.currentLiteral();
 		expect(Token::Identifier);
-		while (accept(Token::LBrack))
-		{
-			identOrTuple += formatToken(Token::LBrack);
-			expect(Token::LBrack);
-			if (accept(Token::Number))
-				identOrTuple += parseDecimalNumber();
-			identOrTuple += formatToken(Token::RBrack);
-			expect(Token::RBrack);
-		}
+		identOrTuple += parseArray();
 		return identOrTuple;
 	}
 	expect(Token::LParen);
@@ -275,6 +282,8 @@ string TestFileParser::parseIdentifierOrTuple()
 	}
 	expect(Token::RParen);
 	identOrTuple += formatToken(Token::RParen);
+
+	identOrTuple += parseArray();
 	return identOrTuple;
 }
 
