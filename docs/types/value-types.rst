@@ -62,7 +62,7 @@ Shifts
 The result of a shift operation has the type of the left operand, truncating the result to match the type.
 
 - For positive and negative ``x`` values, ``x << y`` is equivalent to ``x * 2**y``.
-- For positive and negative ``x`` values,  ``x >> y`` is equivalent to ``x / 2**y``, with values rounded down towards negative infinity.
+- For positive ``x`` values,  ``x >> y`` is equivalent to ``x / 2**y``. For negative ``x`` values, ``x >> y`` is equivalent to ``(x + 1) / 2**y - 1`` (which is the same as dividing ``x`` by ``2**y`` while rounding down towards negative infinity).
 - In all cases, shifting by a negative ``y`` throws a runtime exception.
 
 .. warning::
