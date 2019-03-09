@@ -10,9 +10,11 @@ A Simple Smart Contract
 
 Let us begin with a basic example [that sets the value of a variable] and exposes
 it for other contracts to access. 
+
 私たちと始めましょう　簡単な例で 変数の値をセットします　そして　中身をみます　別のコントラクトからアクセスするために
 
 It is fine if you do not understand everything right now, we will go into more detail later.
+
 これは良い例です　もしあなたが理解できなくても　全てのことを　まさしく今　私たちが詳しく説明します　詳細を　後ほど
 
 Storage
