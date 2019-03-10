@@ -12,39 +12,50 @@ Withdrawal from Contracts
 
 The recommended method of sending funds after an effect
 is using the withdrawal pattern. 
+
 推奨しています　資金を送るためのメソッド　効果は引き出しの見本に利用できます
 
 Although the most intuitive　method of sending Ether, 
+
 しかし、　直感的にEtherを送るための方法は
 
 as a result of an effect, 
-その結果として
+
+その効果の結果として
 
 is a direct ``transfer`` call, 
+
 直接「transfer」を呼びます
 
 this is not recommended as it introduces a potential security risk. 
+
 これは推奨されません　それはセキュリティリスクを含むとして紹介しています
 
 You may read　more about this on the :ref:`security_considerations` page.
+
 詳しいことは「the Security Considerations」のページを呼んでください
 
 The following is an example of the withdrawal pattern in practice in
 a contract <where the goal is to send the most money to the
 contract> in order to become the "richest", 
+
 下記はコントラクトへたくさんのお金を送るコントラクトで実際に引き出す例です 裕福になるための命令で
 
 inspired by `King of the Ether <https://www.kingoftheether.com/>`_.
+
 「King of the Ether」にインスパイアされました。
 
 In the following contract, 
+
 下記のコントラクトでは
 
 if you are usurped as the richest,
+
 もしあなたがお金持ちとして奪われるなら
 
 you will receive the funds of the person who has gone on to
 become the new richest.
+
 新しいお金持ちになることで資金のなくなった人の資金をあなたは受け取るでしょう　
 
 ::
