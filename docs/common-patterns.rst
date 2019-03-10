@@ -33,7 +33,7 @@ this is not recommended as it introduces a potential security risk.
 
 You may read　more about this on the :ref:`security_considerations` page.
 
-詳しいことは「the Security Considerations」のページを呼んでください
+詳しいことは「the Security Considerations」のページを読んでください
 
 The following is an example of the withdrawal pattern in practice in
 a contract <where the goal is to send the most money to the
