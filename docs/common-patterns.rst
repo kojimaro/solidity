@@ -131,7 +131,7 @@ an attacker could trap the　contract into an unusable state by causing ``riches
 
 攻撃者はそのコントラクトを使えない状態にする罠を仕掛けることができました。　
 
-``richest``が「fallback function（コントラクトが実行されるたびに呼ばれる関数）」を持つコントラクトのアドレスによって失敗を引き起こすことで。（``revert()``を使うことで、または2300gas以上を消費することで）
+ ``richest`` が「fallback function（コントラクトが実行されるたびに呼ばれる関数）」を持つコントラクトのアドレスによって失敗を引き起こすことで。（ ``revert()`` を使うことで、または2300gas以上を消費することで）
 
 That way,　whenever ``transfer`` is called to deliver funds to the"poisoned" contract, 
 
