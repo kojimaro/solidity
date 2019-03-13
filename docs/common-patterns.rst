@@ -135,13 +135,19 @@ an attacker could trap the　contract into an unusable state by causing ``riches
 
 That way,　whenever ``transfer`` is called to deliver funds to the"poisoned" contract, 
 
+この方法は、``transfer`` が呼ばれるたびに資金を悪いコントラクトへ配達します。
 
-it will fail and thus also ``becomeRichest``
-will fail, with the contract being stuck forever.
+it will fail and thus also ``becomeRichest`` will fail, with the contract being stuck forever.
+
+それは失敗するでしょう。そして``becomeRichest`` も失敗するでしょう、コントラクトが永遠に動かなくなるとともに。
 
 In contrast, if you use the "withdraw" pattern from the first example,
-the attacker can only cause his or her own withdraw to fail and not the
-rest of the contract's workings.
+
+対照的に、もしあなたが最初の例の"withdraw"パターンを使うなら、
+
+the attacker can only cause his or her own withdraw to fail and not the rest of the contract's workings.
+
+攻撃者が彼または彼女の資金の引き出しの失敗を引き起こさせるようなものです。そしてコントラクトの仕事に休みはありません。
 
 .. index:: access;restricting
 
